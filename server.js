@@ -1,0 +1,1 @@
+import con from "./config/database.js"
