@@ -7,6 +7,7 @@ const pool = mysql2.createPool({
   database: "splitwise_app",
   port: 3306,
   connectionLimit: 10,
+  timezone: "Z",
 });
 
 try {

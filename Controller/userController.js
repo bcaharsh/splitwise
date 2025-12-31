@@ -1,6 +1,7 @@
 import { Errorhandler } from "../utils/errorhandle.js";
 import { router } from "../utils/routerhandle.js";
 import { getUsers, createUser } from "../services/user.service.js";
+import { upload } from "../Middleware/upload.middleware.js";
 
 const userget = async (req, res) => {
   const data = await getUsers();
@@ -12,7 +13,12 @@ const userget = async (req, res) => {
 
 const userpost = async (req, res) => {
   const userData = req.body;
-  const newUser = await createUser(userData);
+  const data = {
+    ...userData,
+    profile_image_url: req.file ? req.file.path : null,
+  };
+  const newUser = await createUser(data);
+
   return res.status(201).json({
     data: newUser,
     message: "User created successfully",
@@ -20,6 +26,6 @@ const userpost = async (req, res) => {
 };
 
 router.get("/", Errorhandler(userget));
-router.post("/", Errorhandler(userpost));
+router.post("/", upload.single("profile_image"), Errorhandler(userpost));
 
 export default router;
