@@ -2,7 +2,6 @@ import mysql2 from "mysql2";
 
 const pool = mysql2.createPool({
   host: "localhost",
-  password: process.env.DB_PASSWORD,
   user: "root",
   database: "splitwise_app",
   port: 3306,

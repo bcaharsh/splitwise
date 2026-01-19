@@ -20,6 +20,7 @@ const userpost = async (req, res) => {
   const newUser = await createUser(data);
 
   return res.status(201).json({
+    status: 201,
     data: newUser,
     message: "User created successfully",
   });

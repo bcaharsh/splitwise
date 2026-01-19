@@ -1,6 +1,7 @@
 import con from "../config/database.js";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
+import { randomgenerator } from "../utils/randomgenerator.js";
 /**
  * Get all users
  * @returns {Promise<Array>} Array of user objects
@@ -61,5 +62,16 @@ export const createUser = async (userData) => {
     new Date(),
   ];
   const [users] = await con.execute(insert_query, params);
+
+  const token = randomgenerator(8);
+  const token_id = uuidv4();
+
+  const verifymail = {
+    to: process.env.Email_ID,
+    from: email,
+    subject: `Verify with splitwise ${first_name}`,
+    body: `<div>please click the link and verify the mail</div><div>${process.env.SERVER_RUNNING}/${token}</div>`,
+  };
+
   return users;
 };

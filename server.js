@@ -1,7 +1,9 @@
+import "dotenv/config";
 import con from "./config/database.js";
 import userController from "./Controller/userController.js";
 import { app } from "./utils/expressapphandle.js";
 import express from "express";
+import transporter from "./services/email.service.js";
 
 app.use(express.json());
 app.use(express.urlencoded());
