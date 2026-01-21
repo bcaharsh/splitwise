@@ -5,6 +5,7 @@ import { app } from "./utils/expressapphandle.js";
 import express from "express";
 import transporter from "./services/email.service.js";
 
+app.set("trust proxy", true);
 app.use(express.json());
 app.use(express.urlencoded());
 

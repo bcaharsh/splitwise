@@ -5,6 +5,11 @@ import { upload } from "../Middleware/upload.middleware.js";
 
 const userget = async (req, res) => {
   const data = await getUsers();
+  const ip = req.ip;
+  console.log(ip, "userget api ip");
+  const header = req.headers;
+  console.log(header, "user get api contain header");
+  console.log(header["user-agent"], "user get api contain header");
   return res.status(200).json({
     data,
     message: "success",
