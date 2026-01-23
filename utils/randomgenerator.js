@@ -1,4 +1,4 @@
-export function randomgenerator(num) {
+export function StringGenerator(num) {
   let result;
   const characters = "abcdefghijklmnopqrstuvwxyz1234567890";
   for (let i = 0; i < num; i++) {

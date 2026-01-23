@@ -3,26 +3,22 @@ import { router } from "../utils/routerhandle.js";
 import { getUsers, createUser } from "../services/user.service.js";
 import { upload } from "../Middleware/upload.middleware.js";
 
-const userget = async (req, res) => {
+const getuser = async (req, res) => {
   const data = await getUsers();
-  const ip = req.ip;
-  console.log(ip, "userget api ip");
-  const header = req.headers;
-  console.log(header, "user get api contain header");
-  console.log(header["user-agent"], "user get api contain header");
+
   return res.status(200).json({
     data,
     message: "success",
   });
 };
 
-const userpost = async (req, res) => {
+const postuser = async (req, res) => {
   const userData = req.body;
   const data = {
     ...userData,
     profile_image_url: req.file ? req.file.path : null,
   };
-  const newUser = await createUser(data);
+  const newUser = await createUser(data, req);
 
   return res.status(201).json({
     status: 201,
@@ -31,7 +27,7 @@ const userpost = async (req, res) => {
   });
 };
 
-router.get("/", Errorhandler(userget));
-router.post("/", upload.single("profile_image"), Errorhandler(userpost));
+router.get("/", Errorhandler(getuser));
+router.post("/", upload.single("profile_image"), Errorhandler(postuser));
 
 export default router;

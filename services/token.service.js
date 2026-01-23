@@ -1,6 +1,7 @@
 import con from "../config/database.js";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
+import { transporter } from "../utils/mailhandler.js";
 
 export const createToken = async (param) => {
   const token_query = `
@@ -53,6 +54,15 @@ export const createToken = async (param) => {
   //   });
 
   const [token] = await con.execute(token_query, param_data);
+
+  const verifymail = {
+    to: process.env.Email_ID,
+    from: email,
+    subject: `Verify with splitwise ${param.first_name}`,
+    body: `<div>please click the link and verify the mail</div><div>${process.env.FRONTEND_URL}/verify-mail/${param.token_hash}</div>`,
+  };
+
+  await transporter.sendMail(verifymail);
 
   return token;
 };

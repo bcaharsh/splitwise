@@ -1,7 +1,9 @@
 import con from "../config/database.js";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
-import { randomgenerator } from "../utils/randomgenerator.js";
+import { StringGenerator } from "../utils/randomgenerator.js";
+import { createToken } from "./token.service.js";
+import { createActivityLog } from "./activitylog.service.js";
 /**
  * Get all users
  * @returns {Promise<Array>} Array of user objects
@@ -17,7 +19,7 @@ export const getUsers = async () => {
  * @param {Promise<object>} userData
  * @returns
  */
-export const createUser = async (userData) => {
+export const createUser = async (userData, req) => {
   const {
     email,
     password,
@@ -63,15 +65,33 @@ export const createUser = async (userData) => {
   ];
   const [users] = await con.execute(insert_query, params);
 
-  const token = randomgenerator(8);
-  const token_id = uuidv4();
+  const token = StringGenerator(8);
 
-  const verifymail = {
-    to: process.env.Email_ID,
-    from: email,
-    subject: `Verify with splitwise ${first_name}`,
-    body: `<div>please click the link and verify the mail</div><div>${process.env.SERVER_RUNNING}/${token}</div>`,
+  const token_data = {
+    user_id,
+    token_type: "email_verify",
+    token_hash: token,
+    device_info: req.headers["user-agent"],
+    ip_address: req.ip,
+    is_revoked: false,
+    email,
+    first_name,
   };
+
+  const activity_data = {
+    user_id,
+    activity_type: "user_management",
+    entity_type: "user",
+    entity_id: user_id,
+    action: "create",
+    new_values: JSON.stringify(params),
+    description: "user is create",
+    ip_address: req.ip,
+    user_agent: req.headers["user-agent"],
+  };
+
+  await createToken(token_data);
+  await createActivityLog(activity_data);
 
   return users;
 };
