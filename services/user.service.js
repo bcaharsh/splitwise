@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { StringGenerator } from "../utils/randomgenerator.js";
 import { createToken } from "./token.service.js";
 import { createActivityLog } from "./activitylog.service.js";
+import { createUserPrefrence } from "./userPrefrence.service.js";
 /**
  * Get all users
  * @returns {Promise<Array>} Array of user objects
@@ -91,6 +92,7 @@ export const createUser = async (userData, req) => {
   };
 
   await createToken(token_data);
+  await createUserPrefrence({user_id})
   await createActivityLog(activity_data);
 
   return users;
