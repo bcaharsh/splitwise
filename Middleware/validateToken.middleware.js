@@ -1,4 +1,3 @@
-import con from "../config/database.js"
 import jwt from "jsonwebtoken"
 import { Errorhandler } from "../utils/errorhandle.js"
 import { excludeRoute } from "../config/excludeRoute.config.js"

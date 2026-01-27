@@ -1,5 +1,5 @@
 import con from "../config/database.js";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, validate } from "uuid";
 import bcrypt from "bcryptjs";
 import { StringGenerator } from "../utils/randomgenerator.js";
 import { createToken } from "./token.service.js";
@@ -97,3 +97,30 @@ export const createUser = async (userData, req) => {
 
   return users;
 };
+
+export const getUserCustom_Data=async(fieldName=[],Values=[])=>{
+
+  const get_query=`
+  select * from users where ${fieldName.length !=0 && fieldName.length === Values.length ? fieldName.map(f=>`${f} = ?`).join(" AND ") : '1 = 1'} 
+  `
+  const [User_data]=await con.execute(get_query,Values)
+
+  return User_data
+}
+
+
+export const updateUser=async(fieldName=[],Values=[],wherefieldName,whereValue)=>{
+  if(fieldName.length === 0 && fieldName.length !== Values.length){
+    return []
+  }
+
+  const update_query=`
+  update users
+  set ${fieldName.map(f=>`${f} = ?`).join(", ")}
+  where ${wherefieldName} =?
+  `
+  const updated_values=Values.push(whereValue)
+  const [update_user]=await con.execute(update_query,updated_values)
+
+  return update_user
+}

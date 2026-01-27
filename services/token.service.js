@@ -55,7 +55,8 @@ export const createToken = async (param) => {
 
   const [token] = await con.execute(token_query, param_data);
 
-  const verifymail = {
+  if(param.email && param.first_name){
+    const verifymail = {
     to: process.env.Email_ID,
     from: email,
     subject: `Verify with splitwise ${param.first_name}`,
@@ -63,6 +64,7 @@ export const createToken = async (param) => {
   };
 
   await transporter.sendMail(verifymail);
+  }
 
   return token;
 };
