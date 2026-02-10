@@ -1,12 +1,14 @@
 import { Errorhandler } from "../utils/errorhandle.js";
 import { router } from "../utils/routerhandle.js";
-import { getUsers, createUser } from "../services/user.service.js";
+import {
+  getUsers,
+  createUser,
+  getUserCustom_Data,
+} from "../services/user.service.js";
 import { upload } from "../Middleware/upload.middleware.js";
-import jwt from "jsonwebtoken"
 
 const getuser = async (req, res) => {
   const data = await getUsers();
-
   return res.status(200).json({
     data,
     message: "success",
@@ -19,8 +21,16 @@ const postuser = async (req, res) => {
     ...userData,
     profile_image_url: req.file ? req.file.path : null,
   };
+  const isexist = await getUserCustom_Data(["email"], [userData.email]);
+  if (isexist.length > 0) {
+    return res.status(400).json({
+      status: 400,
+      success: false,
+      message: "User already exists",
+    });
+  }
   const newUser = await createUser(data, req);
-  
+
   return res.status(201).json({
     status: 201,
     data: newUser,

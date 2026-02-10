@@ -1,5 +1,5 @@
-import con from "../config/database.js"
+import con from "../config/database.js";
 
-export const createUserDeviceInfo=async(req)=>{
-    
-}
+export const createUserDeviceInfo = async (userinfo) => {
+  const { user_id, device_token } = userinfo;
+};

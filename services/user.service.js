@@ -67,7 +67,7 @@ export const createUser = async (userData, req) => {
   const [users] = await con.execute(insert_query, params);
 
   const token = StringGenerator(8);
-
+  console.log(token);
   const token_data = {
     user_id,
     token_type: "email_verify",
@@ -92,35 +92,38 @@ export const createUser = async (userData, req) => {
   };
 
   await createToken(token_data);
-  await createUserPrefrence({user_id})
+  await createUserPrefrence({ user_id });
   await createActivityLog(activity_data);
 
   return users;
 };
 
-export const getUserCustom_Data=async(fieldName=[],Values=[])=>{
+export const getUserCustom_Data = async (fieldName = [], Values = []) => {
+  const get_query = `
+  select * from users where ${fieldName.length != 0 && fieldName.length === Values.length ? fieldName.map((f) => `${f} = ?`).join(" AND ") : "1 = 1"} 
+  `;
+  const [User_data] = await con.execute(get_query, Values);
 
-  const get_query=`
-  select * from users where ${fieldName.length !=0 && fieldName.length === Values.length ? fieldName.map(f=>`${f} = ?`).join(" AND ") : '1 = 1'} 
-  `
-  const [User_data]=await con.execute(get_query,Values)
+  return User_data;
+};
 
-  return User_data
-}
-
-
-export const updateUser=async(fieldName=[],Values=[],wherefieldName,whereValue)=>{
-  if(fieldName.length === 0 && fieldName.length !== Values.length){
-    return []
+export const updateUser = async (
+  fieldName = [],
+  Values = [],
+  wherefieldName,
+  whereValue,
+) => {
+  if (fieldName.length === 0 && fieldName.length !== Values.length) {
+    return [];
   }
 
-  const update_query=`
+  const update_query = `
   update users
-  set ${fieldName.map(f=>`${f} = ?`).join(", ")}
+  set ${fieldName.map((f) => `${f} = ?`).join(", ")}
   where ${wherefieldName} =?
-  `
-  const updated_values=Values.push(whereValue)
-  const [update_user]=await con.execute(update_query,updated_values)
+  `;
+  Values.push(whereValue);
+  const [update_user] = await con.execute(update_query, Values);
 
-  return update_user
-}
+  return update_user;
+};

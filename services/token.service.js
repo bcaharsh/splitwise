@@ -23,7 +23,10 @@ export const createToken = async (param) => {
     .update(param.token_hash)
     .digest("hex");
   const now = new Date();
-  const expires_at = new Date(now.getTime() + 30 * 60 * 1000);
+  const expires_at =
+    !param.expires_at || param.expires_at === null
+      ? new Date(now.getTime() + 30 * 60 * 1000)
+      : param.expires_at;
   const token_id = uuidv4();
 
   const param_data = [
@@ -55,16 +58,45 @@ export const createToken = async (param) => {
 
   const [token] = await con.execute(token_query, param_data);
 
-  if(param.email && param.first_name){
+  if (param.email && param.first_name) {
     const verifymail = {
-    to: process.env.Email_ID,
-    from: email,
-    subject: `Verify with splitwise ${param.first_name}`,
-    body: `<div>please click the link and verify the mail</div><div>${process.env.FRONTEND_URL}/verify-mail/${param.token_hash}</div>`,
-  };
+      from: process.env.Email_ID,
+      to: param.email,
+      subject: `Verify with splitwise ${param.first_name}`,
+      html: `<p>Please click below to verify</p><a href="${process.env.FRONTEND_URL}/verify-mail/${param.token_hash}"> Verify Email</a>`,
+    };
 
-  await transporter.sendMail(verifymail);
+    await transporter.sendMail(verifymail);
   }
 
   return token;
+};
+
+export const getfilterToken = async (fields = [], values = []) => {
+  const get_token_query = `
+  select * from user_auth_tokens where ${fields.length !== 0 ? fields.map((f) => `${f}=?`).join("AND") : "1=1"}
+  `;
+  const [get_token] = await con.execute(get_token_query, values);
+
+  return get_token;
+};
+
+export const update_Token = async (
+  fields = [],
+  values = [],
+  wherefield,
+  wherevalue,
+) => {
+  if (fields.length === 0 || values.length !== fields.length) {
+    return [];
+  }
+  const token_update_query = `
+  update user_auth_tokens
+  set ${fields.map((f) => `${f}=?`).join(",")}
+  where ${wherefield}=?
+  `;
+  values.push(wherevalue);
+  const [token_update] = await con.execute(token_update_query, values);
+
+  return token_update;
 };
