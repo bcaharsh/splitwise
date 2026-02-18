@@ -9,7 +9,6 @@ import {
   deactivateRecurringExpense,
   getUserRecurringExpenses,
   getGroupRecurringExpenses,
-  calculateSplits,
 } from "../services/recurringExpense.service.js";
 import { checkGroupMembership } from "../services/group.service.js";
 import { createActivityLog } from "../services/activitylog.service.js";

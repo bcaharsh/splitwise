@@ -1,6 +1,7 @@
 import { Errorhandler } from "../utils/errorhandle.js";
 import { router } from "../utils/routerhandle.js";
 import { upload } from "../Middleware/upload.middleware.js";
+import con from "../config/database.js"; // ✅ ADD THIS
 import {
   createGroup,
   addGroupMember,
@@ -90,7 +91,7 @@ const createNewGroup = async (req, res) => {
   await createActivityLog(activity_data);
 
   // Step 7: Return group details
-  const [groupDetails] = await getGroupCustomData(
+  const groupDetails = await getGroupCustomData(
     ["group_id"],
     [newGroup.group_id],
   );
@@ -99,7 +100,10 @@ const createNewGroup = async (req, res) => {
     status: 201,
     success: true,
     message: "Group created successfully",
-    data: groupDetails[0],
+    data:
+      groupDetails.length > 0
+        ? groupDetails[0]
+        : { group_id: newGroup.group_id },
   });
 };
 
@@ -173,9 +177,26 @@ const inviteToGroup = async (req, res) => {
 
   const invitation = await createGroupInvitation(invitationData);
 
-  // Get group details for email
-  const [groupDetails] = await getGroupCustomData(["group_id"], [group_id]);
-  const [inviterDetails] = await getUserCustom_Data(["user_id"], [invited_by]);
+  // ✅ FIX: Get group details with proper error handling
+  const groupDetails = await getGroupCustomData(["group_id"], [group_id]);
+
+  if (!groupDetails || groupDetails.length === 0) {
+    return res.status(404).json({
+      status: 404,
+      success: false,
+      message: "Group not found",
+    });
+  }
+
+  const inviterDetails = await getUserCustom_Data(["user_id"], [invited_by]);
+
+  if (!inviterDetails || inviterDetails.length === 0) {
+    return res.status(404).json({
+      status: 404,
+      success: false,
+      message: "Inviter not found",
+    });
+  }
 
   // Send invitation email
   const invitationEmail = {
@@ -308,14 +329,11 @@ const acceptInvitation = async (req, res) => {
     invitationData.invitation_id,
   );
 
-  // Step 6: Create notification for group admin (implement when notifications phase is done)
-  // TODO: Create notification
-
   // Step 7: Initialize user balances
   await initializeUserBalances(invitationData.group_id, user_id);
 
   // Step 8: Log activity
-  const [userData] = await getUserCustom_Data(["user_id"], [user_id]);
+  const userData = await getUserCustom_Data(["user_id"], [user_id]);
 
   const activity_data = {
     user_id,
@@ -325,7 +343,10 @@ const acceptInvitation = async (req, res) => {
     entity_id: invitationData.group_id,
     action: "join",
     new_values: JSON.stringify(memberData),
-    description: `${userData[0].first_name} joined the group`,
+    description:
+      userData.length > 0
+        ? `${userData[0].first_name} joined the group`
+        : "User joined the group",
     ip_address: req.ip,
     user_agent: req.headers["user-agent"],
   };
@@ -333,7 +354,7 @@ const acceptInvitation = async (req, res) => {
   await createActivityLog(activity_data);
 
   // Step 9: Return group details
-  const [groupDetails] = await getGroupCustomData(
+  const groupDetails = await getGroupCustomData(
     ["group_id"],
     [invitationData.group_id],
   );
@@ -342,7 +363,7 @@ const acceptInvitation = async (req, res) => {
     status: 200,
     success: true,
     message: "Invitation accepted successfully",
-    data: groupDetails[0],
+    data: groupDetails.length > 0 ? groupDetails[0] : null,
   });
 };
 
@@ -350,7 +371,7 @@ const acceptInvitation = async (req, res) => {
  * Decline group invitation
  */
 const declineInvitation = async (req, res) => {
-  const { invitation_token, user_id } = req.body;
+  const { invitation_token } = req.body;
 
   if (!invitation_token) {
     return res.status(400).json({
@@ -434,7 +455,7 @@ const getGroupDashboard = async (req, res) => {
   }
 
   // Step 3: Fetch group details
-  const [groupDetails] = await getGroupCustomData(["group_id"], [group_id]);
+  const groupDetails = await getGroupCustomData(["group_id"], [group_id]);
 
   if (groupDetails.length === 0) {
     return res.status(404).json({
@@ -561,11 +582,11 @@ const updateGroupDetails = async (req, res) => {
     });
   }
 
-  const [oldGroupData] = await getGroupCustomData(["group_id"], [group_id]);
+  const oldGroupData = await getGroupCustomData(["group_id"], [group_id]);
 
   await updateGroup(updateFields, updateValues, "group_id", group_id);
 
-  const [newGroupData] = await getGroupCustomData(["group_id"], [group_id]);
+  const newGroupData = await getGroupCustomData(["group_id"], [group_id]);
 
   // Log activity
   const activity_data = {
@@ -575,8 +596,10 @@ const updateGroupDetails = async (req, res) => {
     entity_type: "group",
     entity_id: group_id,
     action: "update",
-    old_values: JSON.stringify(oldGroupData[0]),
-    new_values: JSON.stringify(newGroupData[0]),
+    old_values:
+      oldGroupData.length > 0 ? JSON.stringify(oldGroupData[0]) : null,
+    new_values:
+      newGroupData.length > 0 ? JSON.stringify(newGroupData[0]) : null,
     description: "Group details updated",
     ip_address: req.ip,
     user_agent: req.headers["user-agent"],
@@ -588,7 +611,7 @@ const updateGroupDetails = async (req, res) => {
     status: 200,
     success: true,
     message: "Group updated successfully",
-    data: newGroupData[0],
+    data: newGroupData.length > 0 ? newGroupData[0] : null,
   });
 };
 

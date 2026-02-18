@@ -1,5 +1,6 @@
 import { Errorhandler } from "../utils/errorhandle.js";
 import { router } from "../utils/routerhandle.js";
+import { upload } from "../Middleware/upload.middleware.js";
 import { getUserCustom_Data, updateUser } from "../services/user.service.js";
 import { updatePrefrence } from "../services/userPrefrence.service.js";
 import { createActivityLog } from "../services/activitylog.service.js";
@@ -22,22 +23,43 @@ const userProfile = async (req, res) => {
     return res.status(400).json({
       status: 400,
       success: false,
-      message: "user id is require",
+      message: "user_id is required",
     });
   }
+
   const updatevalues = [];
   const updateFields = [];
 
-  Object.entries(payload).forEach((key, value) => {
+  // ✅ FIX: Destructure [key, value] from Object.entries()
+  Object.entries(payload).forEach(([key, value]) => {
     if (value !== undefined && value !== null && String(value).trim() !== "") {
-      updatevalues.push(value);
-      updateFields.push(key);
+      updateFields.push(key); // Push key first
+      updatevalues.push(value); // Push value second
     }
   });
 
+  if (updateFields.length === 0) {
+    return res.status(400).json({
+      status: 400,
+      success: false,
+      message: "No fields to update",
+    });
+  }
+
   const old_user_data = await getUserCustom_Data(["user_id"], [user_id]);
+
+  if (old_user_data.length === 0) {
+    return res.status(404).json({
+      status: 404,
+      success: false,
+      message: "User not found",
+    });
+  }
+
   await updateUser(updateFields, updatevalues, "user_id", user_id);
+
   const get_user_data = await getUserCustom_Data(["user_id"], [user_id]);
+
   const activity_data = {
     user_id: user_id,
     activity_type: "user_management",
@@ -56,8 +78,8 @@ const userProfile = async (req, res) => {
   return res.status(200).json({
     status: 200,
     success: true,
-    message: "Data is updated",
-    userdata: get_user_data,
+    message: "Profile updated successfully",
+    data: get_user_data[0],
   });
 };
 
@@ -73,6 +95,14 @@ const userPrefrence = async (req, res) => {
     user_id,
   } = req.body;
 
+  if (!user_id) {
+    return res.status(400).json({
+      status: 400,
+      success: false,
+      message: "user_id is required",
+    });
+  }
+
   const payload = {
     notification_push,
     notification_email,
@@ -82,26 +112,37 @@ const userPrefrence = async (req, res) => {
     show_running_balance,
     theme,
   };
+
   const updatevalues = [];
   const updatefields = [];
 
-  Object.entries(payload).forEach((key, value) => {
+  // ✅ FIX: Destructure [key, value] from Object.entries()
+  Object.entries(payload).forEach(([key, value]) => {
     if (value !== undefined && value !== null && String(value).trim() !== "") {
-      updatevalues.push(value);
-      updatefields.push(key);
+      updatefields.push(key); // Push key first
+      updatevalues.push(value); // Push value second
     }
   });
+
+  if (updatefields.length === 0) {
+    return res.status(400).json({
+      status: 400,
+      success: false,
+      message: "No fields to update",
+    });
+  }
 
   await updatePrefrence(updatefields, updatevalues, "user_id", user_id);
 
   return res.status(200).json({
     status: 200,
     success: true,
-    message: "update the user prefrence",
+    message: "Preferences updated successfully",
   });
 };
 
-router.put("/user", Errorhandler(userProfile));
+// ✅ Add upload middleware for profile image
+router.put("/user", upload.single("profile_image"), Errorhandler(userProfile));
 router.put("/", Errorhandler(userPrefrence));
 
 export default router;
